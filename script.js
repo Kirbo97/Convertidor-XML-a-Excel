@@ -36,10 +36,26 @@ const WIDTHS = {
 };
 
 const TEXT_COLUMNS = {
-  compras: ["A", "C", "G", "H", "I", "K"],
-  ventas: ["A", "B"],
+  compras: ["A", "B", "C", "D", "E", "G", "H", "I", "K", "Z", "AA", "AB", "AC", "AI", "AJ", "AK", "AL"],
+  ventas: ["A", "B", "C", "D", "E"],
   ventasEstablecimiento: ["A"]
 };
+
+Object.entries(TEXT_COLUMNS).forEach(([sheetName, columns]) => {
+  const sheet = workbook.getWorksheet(
+    sheetName === "ventasEstablecimiento"
+      ? "Ventas establecimiento"
+      : sheetName.charAt(0).toUpperCase() + sheetName.slice(1)
+  );
+
+  columns.forEach(col => {
+    sheet.getColumn(col).numFmt = "@";
+    sheet.getColumn(col).alignment = {
+      horizontal: "center",
+      vertical: "middle"
+    };
+  });
+});
 
 function localName(node) {
   return node.localName || node.nodeName.split(":").pop();
