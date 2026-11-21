@@ -7,14 +7,13 @@
   <title>Conversor XML ATS a Excel</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script src="script.js" defer></script>
+  <script src="funciones.js" defer></script>
 </head>
 <body>
   <main class="container">
     <header class="hero">
       <div class="brand-icon" aria-hidden="true">XLSX</div>
-      <p class="eyebrow">HERRAMIENTA GRATUITA</p>
-      <h1>Conversor XML del ATS a Excel</h1>
+      <h1>Conversor de Reportes ATS de XML a Excel</h1>
       <p class="intro">Selecciona tu archivo XML del ATS o pega su contenido. El Excel se genera en tu navegador, sin enviar el documento a un servidor.</p>
     </header>
 
@@ -30,7 +29,7 @@
         <span class="upload-icon" aria-hidden="true">↑</span>
         <strong>Seleccionar archivo XML</strong>
         <span>o arrastra y suelta el archivo aquí</span>
-        <input id="xmlFile" type="file" accept=".xml,text/xml,application/xml">
+        <input type="file" id="xmlFile" accept=".xml" multiple>
       </label>
 
       <div class="separator"><span>O pega el contenido</span></div>
