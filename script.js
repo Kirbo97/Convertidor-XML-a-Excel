@@ -35,21 +35,31 @@ const WIDTHS = {
   "Ventas establecimiento": [12,13,12]
 };
 
+// Defino que columnas de que hojas seran Texto.
 const TEXT_COLUMNS = {
-  compras: ["A", "B", "C", "D", "E", "G", "H", "I", "K", "Z", "AA", "AB", "AC", "AI", "AJ", "AK", "AL"],
+  compras: ["A", "B", "C", "D", "E", "G", "H", "I", "K", "Y", "Z", "AA", "AB", "AC", "AI", "AJ", "AK", "AL"],
   ventas: ["A", "B", "C", "D", "E"],
   ventasEstablecimiento: ["A"]
 };
 
+// Defino que columnas de que hojas seran Numeros.
 const ACCOUNTING_COLUMNS = {
   compras: ["L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "AF", "AG", "AH"],
   ventas: ["G", "H", "I", "J", "K", "L", "M"],
   ventasEstablecimiento: ["B", "C"]
 };
 
+// Defino que columnas de que hojas seran Fechas.
+const DATE_COLUMNS = {
+  compras: ["J", "F", "AM"],
+  ventas: [],
+  ventasEstablecimiento: []
+};
+
+// Defino que columnas de que hojas solo se centraran
 const CENTER_COLUMNS = {
-  compras: ["J","AD", "AE", "AM"],
-  ventas: ["N"],
+  compras: ["J","AD", "AE"],
+  ventas: ["F", "N"],
   ventasEstablecimiento: ["A"]
 };
 
@@ -102,6 +112,29 @@ function applyColumnFormats(ws, sectionKey) {
       horizontal: "center",
       vertical: "middle"
     };
+  });
+
+  // FORMATO FECHA Y CENTRADO
+  const dateColumns = DATE_COLUMNS[sectionKey] || [];
+
+  dateColumns.forEach(letter => {
+    const column = ws.getColumn(letter);
+
+    column.numFmt = "dd/mm/yyyy";
+    column.alignment = {
+      horizontal: "center",
+      vertical: "middle"
+    };
+
+    for (let row = 2; row <= ws.rowCount; row++) {
+      const cell = ws.getCell(`${letter}${row}`);
+
+      if (cell.value !== null && cell.value !== "") {
+        const date = new Date(cell.value);
+
+        if (!isNaN(date.getTime())) { cell.value = date; }
+      }
+    }
   });
 }
 
