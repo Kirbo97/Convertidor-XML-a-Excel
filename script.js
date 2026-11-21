@@ -41,21 +41,69 @@ const TEXT_COLUMNS = {
   ventasEstablecimiento: ["A"]
 };
 
-Object.entries(TEXT_COLUMNS).forEach(([sheetName, columns]) => {
-  const sheet = workbook.getWorksheet(
-    sheetName === "ventasEstablecimiento"
-      ? "Ventas establecimiento"
-      : sheetName.charAt(0).toUpperCase() + sheetName.slice(1)
-  );
+const ACCOUNTING_COLUMNS = {
+  compras: ["L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "AF", "AG", "AH"],
+  ventas: ["G", "H", "I", "J", "K", "L", "M"],
+  ventasEstablecimiento: ["B", "C"]
+};
 
-  columns.forEach(col => {
-    sheet.getColumn(col).numFmt = "@";
-    sheet.getColumn(col).alignment = {
+const CENTER_COLUMNS = {
+  compras: ["J","AD", "AE", "AM"],
+  ventas: ["N"],
+  ventasEstablecimiento: ["A"]
+};
+
+function applyColumnFormats(ws, sectionKey) {
+
+  // FORMATO TEXTO Y CENTRADO
+  const textColumns = TEXT_COLUMNS[sectionKey] || [];
+
+  textColumns.forEach(letter => {
+    const column = ws.getColumn(letter);
+
+    column.numFmt = "@";
+    column.alignment = {
       horizontal: "center",
       vertical: "middle"
     };
   });
-});
+
+  // FORMATO CONTABILIDAD Y DERECHA
+  const accountingColumns = ACCOUNTING_COLUMNS[sectionKey] || [];
+
+  accountingColumns.forEach(letter => {
+    const column = ws.getColumn(letter);
+
+    column.numFmt = "#,##0.00";
+    column.alignment = {
+      horizontal: "right",
+      vertical: "middle"
+    };
+
+    // Convierte los valores de texto a números.
+    for (let row = 2; row <= ws.rowCount; row++) {
+      const cell = ws.getCell(`${letter}${row}`);
+
+      if (cell.value !== null && cell.value !== "") {
+        const number = Number(cell.value);
+
+        if (Number.isFinite(number)) {
+          cell.value = number;
+        }
+      }
+    }
+  });
+
+  // SOLO CENTRADO
+  const centerColumns = CENTER_COLUMNS[sectionKey] || [];
+
+  centerColumns.forEach(letter => {
+    ws.getColumn(letter).alignment = {
+      horizontal: "center",
+      vertical: "middle"
+    };
+  });
+}
 
 function localName(node) {
   return node.localName || node.nodeName.split(":").pop();
@@ -129,14 +177,6 @@ function setSheetLayout(ws, sheetName, headers, sectionKey = null) {
   if (headers.length && ws.rowCount > 1) {
     ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: ws.rowCount, column: headers.length } };
   }
-
-  const textLetters = sectionKey ? (TEXT_COLUMNS[sectionKey] || []) : [];
-  for (const letter of textLetters) {
-    const columnNumber = letter.charCodeAt(0) - 64;
-    for (let row = 2; row <= ws.rowCount; row++) {
-      ws.getRow(row).getCell(columnNumber).numFmt = "@";
-    }
-  }
 }
 
 function addGeneralSheet(workbook, root) {
@@ -171,14 +211,17 @@ function addDataSheet(workbook, root, section) {
   for (const values of rows) ws.addRow(values);
   setSheetLayout(ws, section.title, headers, section.key);
 
-  // El Excel de referencia conserva los valores de datos como texto.
-  // Se aplica formato de texto a las columnas de identificadores indicadas.
+  // Conserva los valores como texto inicialmente.
   for (let row = 2; row <= ws.rowCount; row++) {
     for (let col = 1; col <= headers.length; col++) {
       const cell = ws.getRow(row).getCell(col);
-      if (cell.value !== null && cell.value !== undefined) cell.value = String(cell.value);
+
+      if (cell.value !== null && cell.value !== undefined) { cell.value = String(cell.value); }
     }
   }
+
+  // Aplica los formatos correspondientes a cada hoja.
+  applyColumnFormats(ws, section.key);
 }
 
 function buildWorkbook(xmlString) {
