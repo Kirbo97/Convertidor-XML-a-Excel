@@ -272,49 +272,63 @@ function buildWorkbook(xmlString) {
 
 async function convertAndDownload() {
   hideMessage();
-  const content = xmlText.value.trim();
-  if (!content) {
-    showMessage("Selecciona un archivo XML o pega primero su contenido.", "error");
+
+  const files = Array.from(fileInput.files || []);
+
+  if (!files.length) {
+    showMessage("Selecciona uno o varios archivos XML.", "error");
     return;
   }
 
   convertButton.disabled = true;
   progress.hidden = false;
-  try {
-    const workbook = buildWorkbook(content);
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = makeOutputName();
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
 
-    const doc = parseXml(content);
-    const counts = SHEETS.map(section => {
-      const node = findDirectChild(doc.documentElement, section.key);
-      return `${section.title}: ${node ? node.children.length : 0}`;
-    }).join(" · ");
-    showMessage(`¡Excel generado! ${counts}. Revisa tus descargas.`, "success");
+  try {
+    let converted = 0;
+
+    for (const file of files) {
+      const content = await file.text();
+
+      const workbook = buildWorkbook(content);
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = makeOutputName(file);
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+
+      converted++;
+    }
+
+    showMessage(
+      `¡Conversión completada! Se generaron ${converted} archivos Excel.`,
+      "success"
+    );
+
   } catch (error) {
     console.error(error);
-    showMessage(error.message || "No se pudo generar el archivo Excel.", "error");
+    showMessage(
+      error.message || "No se pudieron generar los archivos Excel.",
+      "error"
+    );
   } finally {
     convertButton.disabled = false;
     progress.hidden = true;
   }
 }
 
-function makeOutputName() {
-  const selected = fileInput.files && fileInput.files[0];
-  if (selected && selected.name) return selected.name.replace(/\.xml$/i, "") + ".xlsx";
-  return "ReporteATS_convertido.xlsx";
-}
+function makeOutputName(file) { return file.name.replace(/\.xml$/i, "") + ".xlsx"; }
 
 function showMessage(text, type) {
   message.textContent = text;
