@@ -127,12 +127,18 @@ function applyColumnFormats(ws, sectionKey) {
     };
 
     for (let row = 2; row <= ws.rowCount; row++) {
-      const cell = ws.getCell(`${letter}${row}`);
+      const parts = String(cell.value).split("/");
 
-      if (cell.value !== null && cell.value !== "") {
-        const date = new Date(cell.value);
+      if (parts.length === 3) {
+        const day = Number(parts[0]);
+        const month = Number(parts[1]);
+        const year = Number(parts[2]);
 
-        if (!isNaN(date.getTime())) { cell.value = date; }
+        const date = new Date(Date.UTC(year, month - 1, day));
+
+        if ( date.getUTCDate() === day && date.getUTCMonth() === month - 1 && date.getUTCFullYear() === year) {
+          cell.value = date;
+        }
       }
     }
   });
@@ -272,63 +278,49 @@ function buildWorkbook(xmlString) {
 
 async function convertAndDownload() {
   hideMessage();
-
-  const files = Array.from(fileInput.files || []);
-
-  if (!files.length) {
-    showMessage("Selecciona uno o varios archivos XML.", "error");
+  const content = xmlText.value.trim();
+  if (!content) {
+    showMessage("Selecciona un archivo XML o pega primero su contenido.", "error");
     return;
   }
 
   convertButton.disabled = true;
   progress.hidden = false;
-
   try {
-    let converted = 0;
+    const workbook = buildWorkbook(content);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = makeOutputName();
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
 
-    for (const file of files) {
-      const content = await file.text();
-
-      const workbook = buildWorkbook(content);
-      const buffer = await workbook.xlsx.writeBuffer();
-
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      });
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = makeOutputName(file);
-
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      setTimeout(() => URL.revokeObjectURL(url), 3000);
-
-      converted++;
-    }
-
-    showMessage(
-      `¡Conversión completada! Se generaron ${converted} archivos Excel.`,
-      "success"
-    );
-
+    const doc = parseXml(content);
+    const counts = SHEETS.map(section => {
+      const node = findDirectChild(doc.documentElement, section.key);
+      return `${section.title}: ${node ? node.children.length : 0}`;
+    }).join(" · ");
+    showMessage(`¡Excel generado! ${counts}. Revisa tus descargas.`, "success");
   } catch (error) {
     console.error(error);
-    showMessage(
-      error.message || "No se pudieron generar los archivos Excel.",
-      "error"
-    );
+    showMessage(error.message || "No se pudo generar el archivo Excel.", "error");
   } finally {
     convertButton.disabled = false;
     progress.hidden = true;
   }
 }
 
-function makeOutputName(file) { return file.name.replace(/\.xml$/i, "") + ".xlsx"; }
+function makeOutputName() {
+  const selected = fileInput.files && fileInput.files[0];
+  if (selected && selected.name) return selected.name.replace(/\.xml$/i, "") + ".xlsx";
+  return "ReporteATS_convertido.xlsx";
+}
 
 function showMessage(text, type) {
   message.textContent = text;
