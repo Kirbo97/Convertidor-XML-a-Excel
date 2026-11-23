@@ -36,7 +36,7 @@ h1 { margin: 0; font-size: clamp(27px, 5vw, 38px); letter-spacing: -1px; }
   margin: 18px 0; padding: 25px; background: white; border: 1px solid var(--line);
   border-radius: 16px; box-shadow: 0 5px 22px #17243a08;
 }
-.section-heading h2, .details h2 { margin: 0; font-size: 19px; }
+.section-heading h2 { margin: 0; font-size: 19px; }
 .section-heading p { margin: 7px 0 18px; color: var(--muted); font-size: 13px; }
 
 .dropzone {
@@ -75,7 +75,6 @@ textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px #1f4e7815; }
 .message.success { display: block; color: var(--green); background: #ecfdf3; }
 .message.error { display: block; color: var(--red); background: #fef3f2; }
 
-.details { padding-bottom: 20px; }
 .sheet-list { display: grid; gap: 15px; margin: 20px 0; }
 .sheet-list > div { display: flex; align-items: center; gap: 12px; }
 .sheet-mark { display: grid; place-items: center; flex: 0 0 36px; height: 36px; border-radius: 9px; background: #eaf1f8; color: var(--blue); font-size: 11px; font-weight: 800; }
